@@ -1,0 +1,64 @@
+# ============================================================
+# Simple Pendulum - MBDyn GSoC 2026 Entry Test (Step 1)
+# Author: Vaibhav Sharma | Date: March 30, 2026
+#
+# 1m pendulum, 1kg bob, using DISTANCE joint (rigid rod)
+# Pivot clamped at origin. Gravity: 9.81 m/s^2 in -Y.
+# Bob starts at (0,-1,0) with tangential velocity 1.621 m/s (+X)
+# Equivalent to releasing from 30 degrees.
+# Expected period: T = 2*pi*sqrt(L/g) = 2.007 s
+# ============================================================
+
+begin: data;
+    problem: initial value;
+end: data;
+
+begin: initial value;
+    initial time: 0.;
+    final time: 5.;
+    time step: 1.e-3;
+    tolerance: 1e-6;
+    max iterations: 20;
+    method: ms, .6;
+end: initial value;
+
+begin: control data;
+    skip initial joint assembly;
+    structural nodes: 2;
+    rigid bodies: 1;
+    joints: 2;
+    gravity;
+end: control data;
+
+begin: nodes;
+    # Pivot: fixed at origin
+    structural: 0, static,
+        null, eye, null, null;
+
+    # Bob: 1m below pivot, moving in +X at 1.621 m/s
+    structural: 1, dynamic,
+        0., -1., 0.,
+        eye,
+        1.621, 0., 0.,
+        null;
+end: nodes;
+
+begin: elements;
+    # Clamp pivot to ground
+    joint: 0, clamp, 0, node, node;
+
+    # Rigid rod: keep bob exactly 1m from pivot
+    joint: 1, distance,
+        0,
+        1,
+        const, 1.;
+
+    # 1kg point mass at bob
+    body: 1, 1,
+        1.,
+        null,
+        diag, 1.e-3, 1.e-3, 1.e-3;
+
+    # Gravity in -Y direction
+    gravity: uniform, 0., -1., 0., const, 9.81;
+end: elements;
